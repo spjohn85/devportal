@@ -116,7 +116,7 @@ async function fetchDocumentTree () {
         headers: {
           accept: DocumentContentTypeEnum.VndKonnectDocumentTreejson
         }
-      }) as AxiosResponse<ListDocumentsTree, any>
+      }) as any as AxiosResponse<ListDocumentsTree, any>
 
       productStore.setDocumentTree((res.data).data)
     }
@@ -158,7 +158,7 @@ function initActiveProductVersionId () {
   }
 
   if (!activeProductVersionId.value) {
-    productStore.setActiveProductVersionId(versions[0]?.id)
+    productStore.setActiveProductVersionId(versions[versions.length - 1]?.id)
   }
 }
 

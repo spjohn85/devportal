@@ -41,16 +41,17 @@ export const en = {
     registerProductVersion: 'Register Product version'
   },
   authStrategyInfo: {
-    titleLabel: 'Supported Application Auth Strategy:',
+    titleLabel: 'Application Auth Strategy',
     credentialTypeLabel: 'Credential Type:',
     registerBtnText: (productVersionName: string) => `Register for ${productVersionName}`,
-    authMethods: 'Auth Methods:',
+    authMethods: 'Auth Methods',
     keyNames: 'Key Names:',
     bearer: 'Bearer',
     keyAuth: 'Key Auth',
     clientCredentials: 'Client Credentials',
     selfManagedClientCredentials: 'Self Managed',
-    session: 'Session'
+    session: 'Session',
+    disabled: 'Registration for this product version is not enabled'
   },
   userDropdown: {
     myApps: 'My Apps',
@@ -250,6 +251,7 @@ export const en = {
   },
   catalogItem: {
     latestVersion: 'Latest Version:',
+    publicLabels: 'Labels:',
     specificationLink: 'Specification',
     documentationLink: 'Documentation'
   },
@@ -298,7 +300,7 @@ export const en = {
     logoAlt: 'logo'
   },
   myApp: {
-    authStrategyWarning: 'You cannot create an application as this developer portal has no available application auth strategies. Please contact a developer portal admin.',
+    authStrategyWarning: 'There are no APIs that require authentication published to this portal. Application creation is disabled.',
     authStrategyFetchError: (errString: string) => `Error fetching auth strategies: ${errString}`,
     newApp: 'New App',
     plus: 'Plus',

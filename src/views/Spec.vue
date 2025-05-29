@@ -3,11 +3,11 @@
     :ref="specDetails"
     class="spec mt-6 api-documentation"
   >
-    <div class="container max-w-screen-2xl px-5 md:px-0">
-      <div class="swagger-ui has-sidebar breadcrumbs">
+    <div class="w-100">
+      <div class="swagger-ui mx-auto has-sidebar breadcrumbs px-5 md:px-0">
         <KCard
-          v-if="applicationRegistrationEnabled && currentVersion?.registration_configs?.length && !isPublic"
-          class="auth-strategy-card"
+          v-if="currentVersion?.registration_configs?.length && !isPublic"
+          class="auth-strategy-card px-0"
           data-testid="auth-strategy-card"
         >
           <template #body>
@@ -16,42 +16,54 @@
               data-testid="auth-strategy-title"
             >
               {{ helpText.authStrategyInfo.titleLabel }}
-              <KBadge shape="rectangular">
+              <KBadge
+                class="ml-1"
+                shape="rectangular"
+              >
                 {{ currentVersion?.registration_configs?.[0].name }}
               </KBadge>
             </span>
-            <p class="auth-methods-label">
-              {{ helpText.authStrategyInfo.authMethods }}
-            </p>
             <div class="info-container">
-              <KCard class="badge-container">
-                <template #body>
-                  <KBadge
-                    v-if="currentVersion?.registration_configs?.[0].credential_type === 'key_auth'"
-                    shape="rectangular"
-                    data-testid="auth-method-key-auth"
-                  >
-                    {{ helpText.authStrategyInfo.keyAuth }}
-                  </KBadge>
-                  <KBadge
-                    v-for="(authMethod, index) in currentVersion?.registration_configs?.[0].auth_methods"
-                    v-else
-                    :key="authMethod + index"
-                    :data-testid="`auth-method-${authMethod}`"
-                    shape="rectangular"
-                  >
-                    {{ authMethodLabelObj[authMethod] }}
-                  </KBadge>
-                </template>
-              </KCard>
-              <KButton
-                appearance="primary"
-                class="register-btn"
-                data-testid="app-reg-v2-register-btn"
-                @click="triggerViewSpecRegistrationModal"
+              <span class="label">
+                {{ helpText.authStrategyInfo.authMethods }}
+                <KBadge
+                  v-if="currentVersion?.registration_configs?.[0].credential_type === 'key_auth'"
+                  class="ml-1"
+                  shape="rectangular"
+                  data-testid="auth-method-key-auth"
+                >
+                  {{ helpText.authStrategyInfo.keyAuth }}
+                </KBadge>
+                <KBadge
+                  v-for="(authMethod, index) in currentVersion?.registration_configs?.[0].auth_methods"
+                  v-else
+                  :key="authMethod + index"
+                  class="ml-1"
+                  :data-testid="`auth-method-${authMethod}`"
+                  shape="rectangular"
+                >
+                  {{ authMethodLabelObj[authMethod] }}
+                </KBadge>
+              </span>
+              <KTooltip
+                trigger="hover"
               >
-                {{ helpText.authStrategyInfo.registerBtnText(currentVersion?.name) }}
-              </KButton>
+                <KButton
+                  :disabled="!applicationRegistrationEnabled"
+                  appearance="primary"
+                  class="register-btn"
+                  data-testid="app-reg-v2-register-btn"
+                  @click="triggerViewSpecRegistrationModal"
+                >
+                  {{ helpText.authStrategyInfo.registerBtnText(currentVersion?.name) }}
+                </KButton>
+                <template
+                  v-if="!applicationRegistrationEnabled"
+                  #content
+                >
+                  {{ helpText.authStrategyInfo.disabled }}
+                </template>
+              </KTooltip>
             </div>
           </template>
         </KCard>
@@ -197,7 +209,7 @@ export default defineComponent({
     ]
 
     const applicationRegistrationEnabled = computed(() => {
-      return Boolean(currentVersion.value?.registration_configs?.length && isAllowedToRegister.value)
+      return currentVersion.value?.registration_configs.some(config => config.registration_enabled) && isAllowedToRegister.value
     })
 
     const helpText = useI18nStore().state.helpText
@@ -620,13 +632,11 @@ export default defineComponent({
 
 <style lang="scss" scoped>
   .auth-strategy-card {
-    --KCardBorder: 1px solid var(--section_colors-stroke);
-    --KCardBorderRadius: 4px;
-    --KCardPaddingX: 12px;
+    --KCardBorder: none;
     --KCardPaddingY: 12px;
     margin-bottom: 4px;
 
-    .label, .auth-methods-label {
+    .label {
       margin-bottom: 4px;
     }
 

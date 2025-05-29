@@ -39,26 +39,29 @@
       class="no-auth-strategies-warning"
       data-testid="no-auth-strategies-warning"
     />
-    <div
-      v-if="!vitalsLoading && myAppsReady"
+    <AnalyticsConfigCheck
+      v-if="!myAppsReady || appsArePresent"
+      require-analytics
     >
-      <MetricsProvider
-        v-slot="{ timeframe }"
-        v-bind="metricProviderProps"
-      >
-        <h2 class="summary-tier-based mb-4">
-          {{ analyticsCardTitle(timeframe) }}
-        </h2>
-        <KCard
-          class="mb-4 analytics-my-apps"
-          data-testid="analytics-metric-cards"
+      <div>
+        <MetricsProvider
+          v-slot="{ timeframe }"
+          v-bind="metricProviderProps"
         >
-          <template #body>
-            <MetricsConsumer />
-          </template>
-        </KCard>
-      </MetricsProvider>
-    </div>
+          <h2 class="summary-tier-based mb-4">
+            {{ analyticsCardTitle(timeframe) }}
+          </h2>
+          <KCard
+            class="mb-4 analytics-my-apps"
+            data-testid="analytics-metric-cards"
+          >
+            <template #body>
+              <MetricsConsumer />
+            </template>
+          </KCard>
+        </MetricsProvider>
+      </div>
+    </AnalyticsConfigCheck>
     <div>
       <KAlert
         :is-showing="!!deleteError"
@@ -109,13 +112,15 @@
                 :data-testid="'actions-dropdown-' + row.id"
               >
                 <template #content>
-                  <div
-                    data-testid="dropdown-analytics-dashboard"
-                    class="py-2 px-3 type-md cursor-pointer"
-                    @click="$router.push({ name: 'application-dashboard', params: { application_id: row.id }})"
-                  >
-                    {{ helpTextVitals.viewAnalytics }}
-                  </div>
+                  <AnalyticsConfigCheck require-analytics>
+                    <div
+                      data-testid="dropdown-analytics-dashboard"
+                      class="py-2 px-3 type-md cursor-pointer"
+                      @click="$router.push({ name: 'application-dashboard', params: { application_id: row.id }})"
+                    >
+                      {{ helpTextVitals.viewAnalytics }}
+                    </div>
+                  </AnalyticsConfigCheck>
                   <div
                     v-if="isApplicationDcr(row)"
                     data-testid="dropdown-refresh-application-dcr-token"
@@ -139,7 +144,7 @@
                 :title="searchStr ? helpText.noSearchResults : helpText.noApp"
               >
                 <template #message>
-                  <p>
+                  <p v-if="hasAppAuthStrategies">
                     <router-link
                       data-testid="create-application-link"
                       :to="{
@@ -231,10 +236,11 @@ import { Timeframe, TimeframeKeys } from '@kong-ui-public/analytics-utilities'
 import '@kong-ui-public/analytics-metric-provider/dist/style.css'
 import { EXPLORE_V2_DIMENSIONS, EXPLORE_V2_FILTER_TYPES, MetricsConsumer } from '@kong-ui-public/analytics-metric-provider'
 import { GetApplicationResponse, CredentialType } from '@kong/sdk-portal-js'
+import { AnalyticsConfigCheck } from '@kong-ui-public/analytics-config-store'
 
 export default defineComponent({
   name: 'MyApps',
-  components: { PageTitle, ActionsDropdown, RefreshTokenModal, MetricsProvider, MetricsConsumer },
+  components: { AnalyticsConfigCheck, PageTitle, ActionsDropdown, RefreshTokenModal, MetricsProvider, MetricsConsumer },
 
   setup () {
     const { notify } = useToaster()
@@ -254,7 +260,6 @@ export default defineComponent({
 
     const helpText = useI18nStore().state.helpText.myApp
     const helpTextVitals = useI18nStore().state.helpText.analytics
-    const vitalsLoading = ref(true)
 
     const paginationConfig = ref({
       paginationPageSizes: [25, 50, 100],
@@ -266,7 +271,7 @@ export default defineComponent({
     }
 
     const modalTitle = computed(() => `Delete ${deleteItem.value?.name}`)
-    const appIds = ref([])
+    const appIds = ref<string[] | null>(null)
 
     const { state: currentState, send } = useMachine(createMachine({
       predictableActionArguments: true,
@@ -373,10 +378,14 @@ export default defineComponent({
       return helpTextVitals.summary
     }
 
-    const myAppsReady = computed(() => Boolean(appIds.value && appIds.value?.length))
+    // Show the metric cards if applications are loading or if applications have loaded and exist.
+    // If we try to show metric cards when there aren't any applications, they won't be able to
+    // issue a query and will just show an endless skeleton loader.
+    const myAppsReady = computed(() => appIds.value !== null)
+    const appsArePresent = computed(() => !!appIds.value?.length)
 
     const metricProviderProps = computed(() => ({
-      queryReady: myAppsReady.value,
+      queryReady: appsArePresent.value,
       additionalFilter: [
         {
           type: EXPLORE_V2_FILTER_TYPES.IN,
@@ -387,7 +396,6 @@ export default defineComponent({
     }))
 
     onMounted(async () => {
-      vitalsLoading.value = false
       fetchingAuthStrategies.value = true
 
       try {
@@ -430,9 +438,9 @@ export default defineComponent({
       helpText,
       helpTextVitals,
       analyticsCardTitle,
-      vitalsLoading,
       metricProviderProps,
-      myAppsReady
+      myAppsReady,
+      appsArePresent
     }
   }
 })
